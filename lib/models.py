@@ -96,12 +96,14 @@ class IndexState:
     raw_processed: dict[str, dict] = field(default_factory=dict)
     embeddings_version: str = "all-MiniLM-L6-v2"
     last_graph_build: str | None = None
+    wiki_embeddings: dict[str, dict] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
             "raw_processed": self.raw_processed,
             "embeddings_version": self.embeddings_version,
             "last_graph_build": self.last_graph_build,
+            "wiki_embeddings": self.wiki_embeddings,
         }
 
     @classmethod
@@ -110,4 +112,5 @@ class IndexState:
             raw_processed=data.get("raw_processed", {}),
             embeddings_version=data.get("embeddings_version", "all-MiniLM-L6-v2"),
             last_graph_build=data.get("last_graph_build"),
+            wiki_embeddings=data.get("wiki_embeddings", {}),
         )

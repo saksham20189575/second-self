@@ -24,6 +24,7 @@ RAW_DIR = PROJECT_ROOT / "raw"
 WIKI_DIR = PROJECT_ROOT / "wiki"
 DATA_DIR = PROJECT_ROOT / "data"
 INDEX_PATH = DATA_DIR / "index.json"
+GRAPH_PATH = DATA_DIR / "graph.json"
 
 CONTENT_FILENAMES = {
     "note": "content.md",
@@ -282,3 +283,28 @@ def read_wiki_notes() -> list[WikiNote]:
                 notes.append(note)
 
     return notes
+
+
+def write_graph(graph: dict) -> Path:
+    """Atomically write data/graph.json."""
+    ensure_dirs()
+    tmp_path = GRAPH_PATH.with_suffix(".json.tmp")
+    tmp_path.write_text(
+        json.dumps(graph, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    tmp_path.replace(GRAPH_PATH)
+    return GRAPH_PATH
+
+
+def load_graph() -> dict | None:
+    """Load data/graph.json, or None if missing/corrupt."""
+    if not GRAPH_PATH.is_file():
+        return None
+    try:
+        data = json.loads(GRAPH_PATH.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return None
+        return data
+    except (json.JSONDecodeError, OSError):
+        return None

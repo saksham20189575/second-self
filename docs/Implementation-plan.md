@@ -220,9 +220,9 @@ ls raw/   # should show 10+ folders
 
 ### Sub-Phase 2.1 — Auto-Classify (Days 1–3)
 
-- [ ] **2.1.1** Sign up for [Groq](https://console.groq.com/) and add `GROQ_API_KEY` to `.env`
+- [x] **2.1.1** Sign up for [Groq](https://console.groq.com/) and add `GROQ_API_KEY` to `.env`
 
-- [ ] **2.1.2** Implement `lib/llm.py`:
+- [x] **2.1.2** Implement `lib/llm.py`:
 
   | Function | Purpose |
   |----------|---------|
@@ -232,7 +232,7 @@ ls raw/   # should show 10+ folders
 
   Model: `llama-3.1-8b-instant`
 
-- [ ] **2.1.3** Implement text extraction helpers in `lib/storage.py` or `lib/extract.py`:
+- [x] **2.1.3** Implement text extraction helpers in `lib/storage.py` or `lib/extract.py`:
 
   | Source type | Extraction method |
   |-------------|-------------------|
@@ -240,7 +240,7 @@ ls raw/   # should show 10+ folders
   | `link` | `requests` + `beautifulsoup4` strip HTML; fallback to URL string |
   | `file` (PDF) | `pypdf` text extraction; fallback to filename |
 
-- [ ] **2.1.4** Implement `classify.py`:
+- [x] **2.1.4** Implement `classify.py`:
 
   ```
   For each raw/ item not in index.json["raw_processed"]:
@@ -263,17 +263,103 @@ ls raw/   # should show 10+ folders
   {cleaned body content}
   ```
 
-- [ ] **2.1.5** Run classifier on all Week 1 captures:
+- [x] **2.1.5** Run classifier on all Week 1 captures:
 
   ```bash
   python classify.py
   ```
 
-- [ ] **2.1.6** Manually spot-check 5 notes — verify PARA categories make sense
+- [x] **2.1.6** Manually spot-check 5 notes — verify PARA categories make sense
+
+### File Deliverables
+
+| File | Description |
+|------|-------------|
+| `capture.py` | CLI + capture functions |
+| `raw/{id}/meta.json` | Metadata per capture |
+| `raw/{id}/content.*` | Raw content per capture |
+
+### Acceptance Criteria
+
+- [ ] `raw/` and `wiki/` folder structure exists
+- [ ] One command captures a note, a link, AND a file
+- [ ] Every capture has a timestamp + unique ID
+- [ ] 10+ real items captured (not test data)
+
+### Ship Checkpoint
+
+```bash
+# Demo: capture three types in one session
+python capture.py note "Career goal: transition to ML engineering by Q4"
+python capture.py link "https://huggingface.co/sentence-transformers"
+python capture.py file ~/Downloads/some-paper.pdf
+ls raw/   # should show 10+ folders
+```
+
+---
+
+## Phase 2 — The Librarian (Week 2)
+
+**Goal:** Auto-classify raw captures with PARA + tags + summary, then auto-link related notes via embeddings.
+
+**Badge:** 🏅 The Librarian
+
+### Sub-Phase 2.1 — Auto-Classify (Days 1–3)
+
+- [x] **2.1.1** Sign up for [Groq](https://console.groq.com/) and add `GROQ_API_KEY` to `.env`
+
+- [x] **2.1.2** Implement `lib/llm.py`:
+
+  | Function | Purpose |
+  |----------|---------|
+  | `call_llm(prompt, system="")` | Groq API wrapper with retry |
+  | `classify_content(text)` | Returns `{para, tags, summary}` JSON |
+  | `synthesize_answer(context, question)` | RAG answer (used in Phase 4) |
+
+  Model: `llama-3.1-8b-instant`
+
+- [x] **2.1.3** Implement text extraction helpers in `lib/storage.py` or `lib/extract.py`:
+
+  | Source type | Extraction method |
+  |-------------|-------------------|
+  | `note` | Read `content.md` directly |
+  | `link` | `requests` + `beautifulsoup4` strip HTML; fallback to URL string |
+  | `file` (PDF) | `pypdf` text extraction; fallback to filename |
+
+- [x] **2.1.4** Implement `classify.py`:
+
+  ```
+  For each raw/ item not in index.json["raw_processed"]:
+      extract text → classify_content() → write wiki/{para}/{id}.md → update index.json
+  ```
+
+  Wiki note format:
+
+  ```yaml
+  ---
+  id: a1b2c3d4
+  raw_id: 2026-07-06_a1b2c3d4
+  para: Projects
+  tags: [ml, career]
+  summary: "One-line summary"
+  created: 2026-07-06T22:30:00Z
+  links: []
+  ---
+
+  {cleaned body content}
+  ```
+
+- [x] **2.1.5** Run classifier on all Week 1 captures:
+
+  ```bash
+  python classify.py
+  ```
+
+- [x] **2.1.6** Manually spot-check 5 notes — verify PARA categories make sense
 
 ### Sub-Phase 2.2 — Auto-Link (Days 4–7)
 
-- [ ] **2.2.1** Implement `lib/embeddings.py`:
+- [x] **2.2.1** Implement `lib/embeddings.py`:
 
   | Function | Purpose |
   |----------|---------|
@@ -282,7 +368,7 @@ ls raw/   # should show 10+ folders
   | `cosine_similarity(a, b)` | Similarity score |
   | `load_embeddings()` / `save_embeddings()` | `data/embeddings.pkl` |
 
-- [ ] **2.2.2** Implement `link.py`:
+- [x] **2.2.2** Implement `link.py`:
 
   ```
   For each wiki note (new or changed):
@@ -294,15 +380,16 @@ ls raw/   # should show 10+ folders
       save embedding to embeddings.pkl
   ```
 
-- [ ] **2.2.3** Tune similarity threshold:
+- [x] **2.2.3** Tune similarity threshold:
 
   | Threshold | Effect |
   |-----------|--------|
   | 0.65 | More links, some noise |
-  | 0.75 | **Start here** — balanced |
+  | 0.75 | Start here — often too sparse on long notes |
+  | **0.55** | **Tuned default** — after truncating embed text to summary+tags+800 body chars |
   | 0.80 | Fewer, higher-confidence links |
 
-- [ ] **2.2.4** Implement `pipeline.py` orchestrator:
+- [x] **2.2.4** Implement `pipeline.py` orchestrator:
 
   ```bash
   python pipeline.py classify   # classify only
@@ -310,7 +397,7 @@ ls raw/   # should show 10+ folders
   python pipeline.py process    # classify + link
   ```
 
-- [ ] **2.2.5** Capture 5+ additional real items, run full pipeline → 15+ total in `wiki/`
+- [x] **2.2.5** Capture 5+ additional real items, run full pipeline → 15+ total in `wiki/`
 
 ### File Deliverables
 
@@ -327,11 +414,11 @@ ls raw/   # should show 10+ folders
 
 ### Acceptance Criteria
 
-- [ ] Any raw capture → category + tags + summary automatically
-- [ ] PARA categorization working (all four categories used appropriately)
-- [ ] Embeddings computed per note
-- [ ] Related notes auto-linked (no manual tagging)
-- [ ] Runs on 15+ real items → organized `wiki/`
+- [x] Any raw capture → category + tags + summary automatically
+- [x] PARA categorization working (all four categories used appropriately)
+- [x] Embeddings computed per note
+- [x] Related notes auto-linked (no manual tagging)
+- [x] Runs on 15+ real items → organized `wiki/`
 
 ### Ship Checkpoint
 
@@ -353,7 +440,7 @@ Open 2–3 linked notes side by side — confirm the connections are meaningful.
 
 ### Sub-Phase 3.1 — Graph Data Model (Days 1–3)
 
-- [ ] **3.1.1** Implement `build_graph.py`:
+- [x] **3.1.1** Implement `build_graph.py`:
 
   | Step | Logic |
   |------|-------|
@@ -363,7 +450,7 @@ Open 2–3 linked notes side by side — confirm the connections are meaningful.
   | Enrich nodes | `label` = summary, `group` = para, `content_preview` = first 200 chars |
   | Export | Write `data/graph.json` |
 
-- [ ] **3.1.2** Validate `graph.json` schema:
+- [x] **3.1.2** Validate `graph.json` schema:
 
   ```json
   {
@@ -373,7 +460,7 @@ Open 2–3 linked notes side by side — confirm the connections are meaningful.
   }
   ```
 
-- [ ] **3.1.3** Run builder and inspect output:
+- [x] **3.1.3** Run builder and inspect output:
 
   ```bash
   python build_graph.py
@@ -382,7 +469,7 @@ Open 2–3 linked notes side by side — confirm the connections are meaningful.
 
 ### Sub-Phase 3.2 — Interactive Graph (Days 4–7)
 
-- [ ] **3.2.1** Create `static/graph.html` with **vis-network**:
+- [x] **3.2.1** Create `static/graph.html` with **vis-network**:
 
   - Load `graph.json` (inline or fetch)
   - Force-directed layout (Barnes-Hut physics)
@@ -391,7 +478,7 @@ Open 2–3 linked notes side by side — confirm the connections are meaningful.
   - Drag + zoom enabled
   - Optional pulse animation on nodes
 
-- [ ] **3.2.2** Physics config starting point:
+- [x] **3.2.2** Physics config starting point:
 
   ```javascript
   physics: {
@@ -400,14 +487,14 @@ Open 2–3 linked notes side by side — confirm the connections are meaningful.
   }
   ```
 
-- [ ] **3.2.3** Test graph standalone in browser:
+- [x] **3.2.3** Test graph standalone in browser:
 
   ```bash
   python -m http.server 8000
   # Open http://localhost:8000/static/graph.html
   ```
 
-- [ ] **3.2.4** Verify interactions:
+- [x] **3.2.4** Verify interactions:
 
   | Interaction | Expected |
   |-------------|----------|
@@ -416,7 +503,7 @@ Open 2–3 linked notes side by side — confirm the connections are meaningful.
   | Scroll | Zoom in/out |
   | Click node | (Optional) highlight connected edges |
 
-- [ ] **3.2.5** Wire `build_graph.py` into `pipeline.py process` so graph rebuilds after linking
+- [x] **3.2.5** Wire `build_graph.py` into `pipeline.py process` so graph rebuilds after linking
 
 ### File Deliverables
 
@@ -428,11 +515,11 @@ Open 2–3 linked notes side by side — confirm the connections are meaningful.
 
 ### Acceptance Criteria
 
-- [ ] Script builds nodes + edges from notes and exports clean JSON
-- [ ] Interactive force-directed graph renders from that JSON
-- [ ] Hover reveals note content
-- [ ] Drag + zoom work
-- [ ] Built from your real notes, not dummy data
+- [x] Script builds nodes + edges from notes and exports clean JSON
+- [x] Interactive force-directed graph renders from that JSON
+- [x] Hover reveals note content
+- [x] Drag + zoom work
+- [x] Built from your real notes, not dummy data
 
 ### Ship Checkpoint
 
@@ -452,7 +539,7 @@ python -m http.server 8000
 
 ### Sub-Phase 4.1 — Ask Your Brain (Days 1–3)
 
-- [ ] **4.1.1** Implement `ask.py`:
+- [x] **4.1.1** Implement `ask.py`:
 
   ```python
   def ask(question: str, top_k: int = 5) -> AskResult:
@@ -466,7 +553,7 @@ python -m http.server 8000
   5. Call `synthesize_answer()` via `lib/llm.py`
   6. Return `{ answer, sources: [{id, summary, relevance_score, para}] }`
 
-- [ ] **4.1.2** RAG prompt template:
+- [x] **4.1.2** RAG prompt template:
 
   ```
   You are SecondSelf, answering from the user's personal knowledge base.
@@ -479,7 +566,7 @@ python -m http.server 8000
   Question: {question}
   ```
 
-- [ ] **4.1.3** Guardrails:
+- [x] **4.1.3** Guardrails:
 
   | Setting | Value |
   |---------|-------|
@@ -488,7 +575,7 @@ python -m http.server 8000
   | Max context | ~6000 tokens (truncate long notes) |
   | No relevant notes | Return "I don't have notes about that" |
 
-- [ ] **4.1.4** Test with 5+ real questions about your captured notes:
+- [x] **4.1.4** Test with 5+ real questions about your captured notes:
 
   ```bash
   python ask.py "What are my career goals?"
@@ -498,7 +585,7 @@ python -m http.server 8000
 
 ### Sub-Phase 4.2 — Streamlit App + Deployment (Days 4–7)
 
-- [ ] **4.2.1** Implement `app.py` layout:
+- [x] **4.2.1** Implement `app.py` layout:
 
   ```
   ┌────────────────────────────────────────────────────┐
@@ -513,7 +600,7 @@ python -m http.server 8000
   └────────────────────────────────────────────────────┘
   ```
 
-- [ ] **4.2.2** Wire components:
+- [x] **4.2.2** Wire components:
 
   | UI Element | Backend |
   |------------|---------|
@@ -524,7 +611,7 @@ python -m http.server 8000
   | Stats sidebar | Count nodes/edges from `graph.json` |
   | Refresh button | Re-run `build_graph.py`, reload component |
 
-- [ ] **4.2.3** Add caching:
+- [x] **4.2.3** Add caching:
 
   ```python
   @st.cache_resource
@@ -534,7 +621,7 @@ python -m http.server 8000
   def load_graph(): ...
   ```
 
-- [ ] **4.2.4** Test locally:
+- [x] **4.2.4** Test locally:
 
   ```bash
   streamlit run app.py
@@ -542,7 +629,7 @@ python -m http.server 8000
 
   Verify full flow: capture → process → graph updates → ask returns answer.
 
-- [ ] **4.2.5** Write `README.md`:
+- [x] **4.2.5** Write `README.md`:
 
   - Project description + screenshot
   - Setup instructions (venv, deps, `.env`)
@@ -550,9 +637,9 @@ python -m http.server 8000
   - Architecture overview (link to `architecture.md`)
   - Live demo URL
 
-- [ ] **4.2.6** Push to GitHub (public repo)
+- [ ] **4.2.6** Push to GitHub (public repo) — deferred (next week)
 
-- [ ] **4.2.7** Deploy to **Streamlit Community Cloud**:
+- [ ] **4.2.7** Deploy to **Streamlit Community Cloud**: — deferred (next week)
 
   1. Connect GitHub repo at [share.streamlit.io](https://share.streamlit.io)
   2. Set main file: `app.py`
@@ -560,7 +647,7 @@ python -m http.server 8000
   4. Pre-commit `wiki/`, `data/graph.json`, `data/embeddings.pkl` for demo
   5. Verify public URL loads
 
-- [ ] **4.2.8** End-to-end test on deployed app:
+- [ ] **4.2.8** End-to-end test on deployed app: — deferred (next week)
 
   | Step | Action |
   |------|--------|
@@ -577,14 +664,14 @@ python -m http.server 8000
 | `ask.py` | RAG Q&A engine |
 | `app.py` | Streamlit UI |
 | `README.md` | Setup + usage docs |
-| Live URL | `https://secondself-{user}.streamlit.app` |
+| Live URL | `https://secondself-{user}.streamlit.app` (next week) |
 
 ### Acceptance Criteria
 
-- [ ] `ask()` returns answers synthesized from your own notes (retrieval + LLM)
-- [ ] One Streamlit app contains both the graph and the search bar
-- [ ] Deployed live with a public URL
-- [ ] Full pipeline works end to end in the deployed app
+- [x] `ask()` returns answers synthesized from your own notes (retrieval + LLM)
+- [x] One Streamlit app contains both the graph and the search bar
+- [ ] Deployed live with a public URL — deferred (next week)
+- [ ] Full pipeline works end to end in the deployed app — deferred (next week)
 
 ### Ship Checkpoint
 

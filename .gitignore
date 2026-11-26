@@ -8,8 +8,13 @@
 raw/
 
 # Derived / generated data
-data/embeddings.pkl
+data/embeddings.pkl.bak
 data/*.tmp
+
+# Wiki: track note markdown only (Obsidian config, attachments, etc.)
+wiki/**
+!wiki/**/
+!wiki/**/*.md
 
 # Python
 __pycache__/
